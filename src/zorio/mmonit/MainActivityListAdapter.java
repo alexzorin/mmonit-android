@@ -3,6 +3,7 @@ package zorio.mmonit;
 import java.util.List;
 
 import zorio.mmonit.model.Event;
+import zorio.mmonit.model.Host;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -18,19 +19,17 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
 	private MainActivity ctx;
 	
 	private List<Event> events;
+	private List<Host> hosts;
 		
     private static final String[] GROUP_NAMES = { "Events", "Hosts" };
     
     private static final int EVENTS_IDX = 0;
+    private static final int GROUPS_IDX = 1;
     
-    private String[][] children = {
-            { "Arnold", "Barry", "Chuck", "David" },
-            { "Ace", "Bandit", "Cha-Cha", "Deuce" },
-    };
-
-	public MainActivityListAdapter(MainActivity ctx, List<Event> events) {
+	public MainActivityListAdapter(MainActivity ctx, List<Event> events, List<Host> hosts) {
 		this.ctx = ctx;
 		this.events = events;
+		this.hosts = hosts;
 	}
 	    
     public Object getChild(int groupPosition, int childPosition) {
@@ -38,7 +37,7 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
     		case EVENTS_IDX:
     			return events.get(childPosition);
     		default:
-    	        return "Barry " + groupPosition + "," + childPosition;
+    	        return hosts.get(childPosition);
     	}
     }
 
@@ -51,7 +50,7 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
         	case EVENTS_IDX:
         		return events.size();
         	default:
-        		return children[groupPosition].length;
+        		return hosts.size();
         } 	
     }
     
@@ -64,19 +63,15 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
     			View v = /*convertView != null ? convertView :*/ LayoutInflater.from(ctx).inflate(R.layout.item_event, null);
     			Event e = (Event) getChild(groupPosition, childPosition);
     			
-    			if(e == null)
-    				System.out.println(childPosition + "," + groupPosition);
+    			boolean isNew = e.getDate().getTime() >= ctx.getNewEventCutoff();
     			
     			TextView dateView = (TextView)v.findViewById(R.id.eventDate); 			
     			dateView.setText(DateUtils.getRelativeDateTimeString(ctx, 
     					e.getDate().getTime(), 
     					DateUtils.MINUTE_IN_MILLIS, 
     					DateUtils.WEEK_IN_MILLIS, 
-    					DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_12HOUR));
-    			
-    			boolean isNew = false;
-    			if(e.getDate().getTime() >= ctx.getNewEventCutoff()) {
-    				isNew = true;
+    					DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_12HOUR));    			
+    			if(isNew) {
     				dateView.setTypeface(null, Typeface.BOLD);
     			}
 
@@ -136,7 +131,6 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
             ViewGroup parent) {
     	switch(groupPosition) {
     		case EVENTS_IDX:
-    		default:
     			View v = LayoutInflater.from(ctx).inflate(R.layout.group_events, null);
     			TextView t = (TextView) v.findViewById(R.id.eventsGroupNew);
     			if(ctx.getNewEventCount() > 0) {
@@ -146,6 +140,11 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
     				t.setVisibility(View.INVISIBLE);
     			}
     			return v;
+    		case GROUPS_IDX:
+    			v = LayoutInflater.from(ctx).inflate(R.layout.group_hosts, null);
+    			return v;
+    		default:
+    			return new View(ctx);
     	}
     }
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import zorio.mmonit.model.Event;
+import zorio.mmonit.model.Host;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ public class MainActivity extends Activity {
 	public static MMonitClient mc;
 	
 	private List<Event> events;
+	private List<Host> hosts;
 	private int newEventCount;
 	
 	private MenuItem animatingItem;
@@ -34,6 +36,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 				
 		events = new ArrayList<Event>();
+		hosts = new ArrayList<Host>();
 
 		if(!loginIfRequired()) {
 			refreshData();
@@ -51,7 +54,11 @@ public class MainActivity extends Activity {
 	private void refreshData() {
 		ExpandableListView list = (ExpandableListView) findViewById(R.id.viewCategories);
 		if(list.getAdapter() == null) {
-			list.setAdapter(new MainActivityListAdapter(this, events));
+			list.setAdapter(new MainActivityListAdapter(this, events, hosts));
+		}
+		// Cut any current 'new events' off so they aren't marked next time
+		if(getNewEventCount() > 0) {
+			setNewEventCutoff(getNewEventCutoff() + 1);
 		}
 		new GetEventsTask().execute();
 	}
@@ -72,7 +79,7 @@ public class MainActivity extends Activity {
 			case R.id.menu_refresh:
 				// Start async task to refresh data
 				refreshData();			
-				// Spinny loader and disable subsequent animates
+				// Spinny loader and disable subsequent refreshes
 				ImageView newIcon = (ImageView)LayoutInflater.from(this).inflate(R.layout.icon_refresh, null);
 				
 				Animation anim = AnimationUtils.loadAnimation(this, R.anim.anim_rotate);
@@ -152,6 +159,13 @@ public class MainActivity extends Activity {
 	public long getNewEventCutoff() {
 		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
 		return sp.getLong("LatestEvent", 0);
+	}
+	
+	public void setNewEventCutoff(long time) {
+		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
+		SharedPreferences.Editor e = sp.edit();
+		e.putLong("LatestEvent", time);
+		e.commit();
 	}
 	
 	private class GetEventsTask extends AsyncTask<Void, Void, List<Event>> {
