@@ -1,0 +1,72 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LoginActivity"
+    android:background="@drawable/cleantextile" >
+
+    <TextView
+        android:id="@+id/loginHeader"
+        android:text="Login to M/Monit"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:textSize="30sp"
+        android:paddingTop="30dp"
+        />
+    
+    <ScrollView 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/loginHeader"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="30dp" >
+        
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+            
+	        <EditText 
+	            android:id="@+id/editEndpoint"
+	            android:hint="Server (i.e http://127.0.0.1:8080)"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:inputType="textUri"/>
+	        
+	        <EditText 
+	            android:id="@+id/editUsername"
+	            android:hint="Username"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:inputType="textNoSuggestions"/>
+	        
+	        <EditText 
+	            android:id="@+id/editPassword"
+	            android:hint="Password"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:inputType="textPassword"/>
+	        
+	        <CheckBox 
+	            android:id="@+id/checkRememberLogin" 
+	            android:text="Remember credentials?"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:checked="false" 
+		        android:layout_marginTop="15dp"/>
+	        	        
+		    <Button 
+		        android:id="@+id/buttonLogin"
+		        android:text="@string/title_activity_login"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_marginTop="15dp"/>
+		    
+	        	                       
+        </LinearLayout>
+              
+    </ScrollView>
+    
+</RelativeLayout>
