@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="15dp"
+    android:paddingLeft="30dp"
+    android:paddingTop="15dp"
+    android:paddingRight="15dp" >
+    
+    <TextView
+        android:id="@+id/hostDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:text="Date"
+        android:textColor="#999999"
+        android:textSize="10sp" />
+    
+    <TextView
+        android:id="@+id/hostService"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Host Service"
+        android:textStyle="italic" />
+
+    <TextView
+        android:id="@+id/hostMsg"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Host Message" 
+        android:layout_below="@+id/hostService"/>
+    
+    <TextView
+        android:id="@+id/hostHost"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Host Host"
+        android:layout_below="@id/hostMsg"
+        android:textColor="#666666"/>
+
+</RelativeLayout>

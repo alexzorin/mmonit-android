@@ -16,7 +16,7 @@
         
     <TextView 
         android:id="@+id/hostsGroupAlert"
-        android:text="0 Problems"
+        android:text="0 problems"
         android:textColor="#999999"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

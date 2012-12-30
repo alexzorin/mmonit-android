@@ -28,7 +28,10 @@ public class MainActivity extends Activity {
 	private List<Host> hosts;
 	private int newEventCount;
 	
-	private MenuItem animatingItem;
+	private MenuItem refreshMenuItem;
+	private int asyncTaskCount;
+	
+	public static String ATTEMPT_AUTOLOGIN = "ATTEMPT_AUTOLOGIN";
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +40,9 @@ public class MainActivity extends Activity {
 				
 		events = new ArrayList<Event>();
 		hosts = new ArrayList<Host>();
+		asyncTaskCount = 0;
 
-		if(!loginIfRequired()) {
+		if(!loginIfRequired(true)) {
 			refreshData();
 		}
 	}
@@ -46,7 +50,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if(!loginIfRequired()) {
+		if(!loginIfRequired(true)) {
 			refreshData();
 		}
 	}
@@ -60,13 +64,32 @@ public class MainActivity extends Activity {
 		if(getNewEventCount() > 0) {
 			setNewEventCutoff(getNewEventCutoff() + 1);
 		}
+				
+		// Spinny loader and disable subsequent refreshes
+		ImageView newIcon = (ImageView)LayoutInflater.from(this).inflate(R.layout.icon_refresh, null);
+		Animation anim = AnimationUtils.loadAnimation(this, R.anim.anim_rotate);
+		anim.setRepeatMode(Animation.RESTART);
+		anim.setRepeatCount(Animation.INFINITE);
+		newIcon.startAnimation(anim);
+		refreshMenuItem.setActionView(newIcon);
+		refreshMenuItem.setEnabled(false);
+		
 		new GetEventsTask().execute();
+		asyncTaskCount++;
+		new GetHostsTask().execute();
+		asyncTaskCount++;
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_main, menu);
+		getMenuInflater().inflate(R.menu.activity_main, menu);		
 		return true;
+	}
+	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		refreshMenuItem = menu.findItem(R.id.menu_refresh);
+		return super.onPrepareOptionsMenu(menu);
 	}
 	
 	@Override
@@ -74,32 +97,23 @@ public class MainActivity extends Activity {
 		switch(item.getItemId()) {
 			case R.id.menu_logout:
 				mc = null;
-				loginIfRequired();
+				loginIfRequired(false);
 				return true;
 			case R.id.menu_refresh:
-				// Start async task to refresh data
-				refreshData();			
-				// Spinny loader and disable subsequent refreshes
-				ImageView newIcon = (ImageView)LayoutInflater.from(this).inflate(R.layout.icon_refresh, null);
-				
-				Animation anim = AnimationUtils.loadAnimation(this, R.anim.anim_rotate);
-				anim.setRepeatMode(Animation.RESTART);
-				anim.setRepeatCount(Animation.INFINITE);
-				newIcon.startAnimation(anim);
-				
-				item.setActionView(newIcon);
-				item.setEnabled(false);		
-				animatingItem = item;
-				
+				if(item.isEnabled()) {
+					refreshMenuItem = item;
+					refreshData();			
+				}
 				return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}
 	}
 	
-	private boolean loginIfRequired() {
+	private boolean loginIfRequired(boolean autologin) {
 		if(mc == null) {
 			Intent i = new Intent().setClass(this, LoginActivity.class);
+			i.putExtra(ATTEMPT_AUTOLOGIN, autologin);
 			startActivity(i);
 			return true;
 		} else {
@@ -108,11 +122,21 @@ public class MainActivity extends Activity {
 	}
 	
 	private void clearAnimsAndModals() {
-		if(animatingItem != null) {
-			animatingItem.getActionView().clearAnimation();
-			animatingItem.setActionView(null);
-			animatingItem.setEnabled(true);
-			animatingItem = null;
+		if(--asyncTaskCount == 0 && !refreshMenuItem.isEnabled()) {
+			refreshMenuItem.getActionView().clearAnimation();
+			refreshMenuItem.setActionView(null);
+			refreshMenuItem.setEnabled(true);
+		}
+	}
+	
+	private void onHostsLoaded(List<Host> newHosts) {
+		clearAnimsAndModals();
+		if(newHosts == null) {
+			
+		} else {
+			hosts.clear();
+			hosts.addAll(newHosts);
+			((BaseAdapter)((ExpandableListView)findViewById(R.id.viewCategories)).getAdapter()).notifyDataSetChanged();			
 		}
 	}
 	
@@ -172,8 +196,8 @@ public class MainActivity extends Activity {
 
 		@Override
 		protected List<Event> doInBackground(Void... params) {
-			try {
-				List<Event> events = mc.getEvents(0, 10, "date", true);
+			try {				
+				List<Event> events = mc.getEvents(0, 5, "date", true);
 				return events;
 			} catch(Throwable t) {
 				t.printStackTrace();
@@ -184,6 +208,25 @@ public class MainActivity extends Activity {
 		@Override
 		protected void onPostExecute(List<Event> events) {
 			MainActivity.this.onEventsLoaded(events);
+		}
+		
+	}
+	
+	private class GetHostsTask extends AsyncTask<Void, Void, List<Host>> {
+
+		@Override
+		protected List<Host> doInBackground(Void... params) {
+			try {
+				return mc.getHostStatuses();
+			} catch(Throwable t) {
+				t.printStackTrace();
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(List<Host> hosts) {
+			MainActivity.this.onHostsLoaded(hosts);
 		}
 		
 	}

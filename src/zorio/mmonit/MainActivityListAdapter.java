@@ -23,8 +23,8 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
 		
     private static final String[] GROUP_NAMES = { "Events", "Hosts" };
     
-    private static final int EVENTS_IDX = 0;
-    private static final int GROUPS_IDX = 1;
+    private static final int EVENTS_IDX = 1;
+    private static final int HOSTS_IDX = 0;
     
 	public MainActivityListAdapter(MainActivity ctx, List<Event> events, List<Host> hosts) {
 		this.ctx = ctx;
@@ -36,8 +36,10 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
     	switch(groupPosition) {
     		case EVENTS_IDX:
     			return events.get(childPosition);
-    		default:
+    		case HOSTS_IDX:
     	        return hosts.get(childPosition);
+    	    default:
+    	    	return null;
     	}
     }
 
@@ -49,8 +51,10 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
         switch(groupPosition) {
         	case EVENTS_IDX:
         		return events.size();
-        	default:
+        	case HOSTS_IDX:
         		return hosts.size();
+        	default:
+        		return 0;
         } 	
     }
     
@@ -107,11 +111,29 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
     					color = Color.parseColor(isNew ? "#d9f9d4" : "#e6fbe3");    					
     					break;
     			}			
+    			v.setBackgroundColor(color);  			
+    			return v;
+    		case HOSTS_IDX:
+    			v = LayoutInflater.from(ctx).inflate(R.layout.item_host, null);
+    			Host h = (Host) getChild(groupPosition, childPosition);
+    			    			
+    			switch(h.getLed()) {
+    				case 0:
+    					color = Color.parseColor("#fde0d6");
+    					break;
+    				case 1:
+    					color =  Color.parseColor("#fdefda");
+    					break;
+    				case 2:
+    					color =  Color.parseColor("#d9f9d4");
+    					break;
+    				default:
+    					color = Color.parseColor("#ebe9e4");
+    			}
     			v.setBackgroundColor(color);
-    			
     			return v;
     		default:
-    	        return new TextView(ctx);
+    			return null;
     	}
     }
 
@@ -133,14 +155,10 @@ public class MainActivityListAdapter extends BaseExpandableListAdapter {
     		case EVENTS_IDX:
     			View v = LayoutInflater.from(ctx).inflate(R.layout.group_events, null);
     			TextView t = (TextView) v.findViewById(R.id.eventsGroupNew);
-    			if(ctx.getNewEventCount() > 0) {
-    				t.setText(ctx.getNewEventCount() + " new events");
-    				t.setVisibility(View.VISIBLE);
-    			} else {
-    				t.setVisibility(View.INVISIBLE);
-    			}
+    			t.setText(ctx.getNewEventCount() + " new events");
+    			t.setVisibility(View.VISIBLE);
     			return v;
-    		case GROUPS_IDX:
+    		case HOSTS_IDX:
     			v = LayoutInflater.from(ctx).inflate(R.layout.group_hosts, null);
     			return v;
     		default:

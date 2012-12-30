@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -31,8 +32,22 @@ public class LoginActivity extends Activity {
 		});		
 	
 		populateLoginForm();
-		
-		finishIfRequired();
+		if(!finishIfRequired()) {
+			attemptAutologin();
+		}
+	}
+	
+	private void attemptAutologin() {
+		Intent i = getIntent();
+		if(i.getBooleanExtra(MainActivity.ATTEMPT_AUTOLOGIN, false)) {
+			SharedPreferences sp = getSharedPreferences("UserInfo", 0);
+			String username = sp.getString("Username", null),
+				   password = sp.getString("Password", null),
+				   endpoint = sp.getString("Endpoint", null);
+			if(username != null && password != null && endpoint != null) {
+				findViewById(R.id.buttonLogin).callOnClick();
+			}
+		}
 	}
 	
 	@Override
@@ -41,17 +56,18 @@ public class LoginActivity extends Activity {
 		finishIfRequired();
 	}
 	
-	private void finishIfRequired() {
+	private boolean finishIfRequired() {
 		if(MainActivity.mc != null) {
 			finish();
-		}		
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	private void clearModalDialog() {
 		if(mDialog != null) {
-			if(mDialog.isShowing()) {
-				mDialog.cancel();
-			}
+			mDialog.cancel();
 			mDialog = null;
 		}
 	}
