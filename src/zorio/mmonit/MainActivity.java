@@ -9,6 +9,7 @@ import zorio.mmonit.model.Host;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.LayoutInflater;
@@ -29,6 +30,7 @@ public class MainActivity extends Activity {
 	private int newEventCount;
 	
 	private MenuItem refreshMenuItem;
+	
 	private int asyncTaskCount;
 	
 	public static String ATTEMPT_AUTOLOGIN = "ATTEMPT_AUTOLOGIN";
@@ -64,16 +66,7 @@ public class MainActivity extends Activity {
 		if(getNewEventCount() > 0) {
 			setNewEventCutoff(getNewEventCutoff() + 1);
 		}
-				
-		// Spinny loader and disable subsequent refreshes
-		ImageView newIcon = (ImageView)LayoutInflater.from(this).inflate(R.layout.icon_refresh, null);
-		Animation anim = AnimationUtils.loadAnimation(this, R.anim.anim_rotate);
-		anim.setRepeatMode(Animation.RESTART);
-		anim.setRepeatCount(Animation.INFINITE);
-		newIcon.startAnimation(anim);
-		refreshMenuItem.setActionView(newIcon);
-		refreshMenuItem.setEnabled(false);
-		
+								
 		new GetEventsTask().execute();
 		asyncTaskCount++;
 		new GetHostsTask().execute();
@@ -101,8 +94,18 @@ public class MainActivity extends Activity {
 				return true;
 			case R.id.menu_refresh:
 				if(item.isEnabled()) {
-					refreshMenuItem = item;
-					refreshData();			
+					// Spinny loader
+					refreshMenuItem = item;					
+					ImageView newIcon = (ImageView)LayoutInflater.from(this).inflate(R.layout.icon_refresh, null);
+					Animation anim = AnimationUtils.loadAnimation(this, R.anim.anim_rotate);
+					anim.setRepeatMode(Animation.RESTART);
+					anim.setRepeatCount(Animation.INFINITE);
+					newIcon.startAnimation(anim);
+					refreshMenuItem.setActionView(newIcon);
+					refreshMenuItem.setEnabled(false);					
+					if(asyncTaskCount == 0) {
+						refreshData();
+					}
 				}
 				return true;
 			default:
@@ -122,10 +125,15 @@ public class MainActivity extends Activity {
 	}
 	
 	private void clearAnimsAndModals() {
-		if(--asyncTaskCount == 0 && !refreshMenuItem.isEnabled()) {
-			refreshMenuItem.getActionView().clearAnimation();
-			refreshMenuItem.setActionView(null);
-			refreshMenuItem.setEnabled(true);
+		if(--asyncTaskCount == 0) {
+			if(refreshMenuItem != null) {
+				if(refreshMenuItem.getActionView() != null) {
+					refreshMenuItem.getActionView().clearAnimation();
+					refreshMenuItem.setActionView(null);
+				}
+				refreshMenuItem.setEnabled(true);
+				refreshMenuItem = null;
+			}
 		}
 	}
 	
