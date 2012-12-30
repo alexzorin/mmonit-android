@@ -51,7 +51,7 @@
 	        
 	        <CheckBox 
 	            android:id="@+id/checkRememberLogin" 
-	            android:text="Remember credentials?"
+	            android:text="Save credentials this time"
 		        android:layout_width="fill_parent"
 		        android:layout_height="wrap_content"
 		        android:checked="false" 
