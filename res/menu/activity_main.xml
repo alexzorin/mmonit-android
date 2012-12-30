@@ -7,6 +7,13 @@
         android:title="@string/menu_settings"/>
     
     <item 
+        android:id="@+id/menu_refresh"
+        android:showAsAction="always"
+        android:orderInCategory="150"
+        android:title="Refresh"
+        android:icon="@drawable/ic_action_ic_refresh"/>
+    
+    <item 
         android:id="@+id/menu_logout"
         android:orderInCategory="200"
         android:showAsAction="always"

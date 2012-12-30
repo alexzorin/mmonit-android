@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -128,6 +127,7 @@ public class LoginActivity extends Activity {
 			toast.show();
 		} else {
 			MainActivity.mc = mc;
+			// MainActivity should always be adjacent in the activity stack
 			finish();
 		}
 	}
