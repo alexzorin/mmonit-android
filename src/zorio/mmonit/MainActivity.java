@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
 import android.view.Menu;
+import android.view.MenuItem;
 
 public class MainActivity extends Activity {
 	
@@ -29,9 +30,23 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+			case R.id.menu_logout:
+				mc = null;
+				loginIfRequired();
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+	
 	private void loginIfRequired() {
-		Intent i = new Intent().setClass(this, LoginActivity.class);
-		startActivity(i);
+		if(mc == null) {
+			Intent i = new Intent().setClass(this, LoginActivity.class);
+			startActivity(i);
+		}
 	}
 
 }

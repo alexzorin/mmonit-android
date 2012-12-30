@@ -32,6 +32,20 @@ public class LoginActivity extends Activity {
 		});		
 	
 		populateLoginForm();
+		
+		finishIfRequired();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		finishIfRequired();
+	}
+	
+	private void finishIfRequired() {
+		if(MainActivity.mc != null) {
+			finish();
+		}		
 	}
 	
 	private void clearModalDialog() {
@@ -114,8 +128,7 @@ public class LoginActivity extends Activity {
 			toast.show();
 		} else {
 			MainActivity.mc = mc;
-			Intent i = new Intent().setClass(this, MainActivity.class);
-			startActivity(i);
+			finish();
 		}
 	}
 	
