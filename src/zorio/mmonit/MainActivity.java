@@ -1,15 +1,18 @@
 package zorio.mmonit;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import zorio.mmonit.model.Event;
 import zorio.mmonit.model.Host;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.LayoutInflater;
@@ -33,8 +36,6 @@ public class MainActivity extends Activity {
 	
 	private int asyncTaskCount;
 	
-	public static String ATTEMPT_AUTOLOGIN = "ATTEMPT_AUTOLOGIN";
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -43,7 +44,7 @@ public class MainActivity extends Activity {
 		events = new ArrayList<Event>();
 		hosts = new ArrayList<Host>();
 		asyncTaskCount = 0;
-
+		
 		if(!loginIfRequired(true)) {
 			refreshData();
 		}
@@ -64,9 +65,9 @@ public class MainActivity extends Activity {
 		}
 		// Cut any current 'new events' off so they aren't marked next time
 		if(getNewEventCount() > 0) {
-			setNewEventCutoff(getNewEventCutoff() + 1);
+			updateNewEventCutoff();
 		}
-								
+		
 		new GetEventsTask().execute();
 		asyncTaskCount++;
 		new GetHostsTask().execute();
@@ -116,7 +117,7 @@ public class MainActivity extends Activity {
 	private boolean loginIfRequired(boolean autologin) {
 		if(mc == null) {
 			Intent i = new Intent().setClass(this, LoginActivity.class);
-			i.putExtra(ATTEMPT_AUTOLOGIN, autologin);
+			i.putExtra(LoginActivity.ATTEMPT_AUTOLOGIN, autologin);
 			startActivity(i);
 			return true;
 		} else {
@@ -150,38 +151,67 @@ public class MainActivity extends Activity {
 	
 	private void onEventsLoaded(List<Event> newEvents) {
 		clearAnimsAndModals();
-		if(newEvents == null) {
-			
+		if(newEvents == null) {			
 		} else {
 			events.clear();
 			events.addAll(newEvents);
+			fixEventDateTZs();
 			newEventCount = countNewEvents();
-			((BaseAdapter)((ExpandableListView)findViewById(R.id.viewCategories)).getAdapter()).notifyDataSetChanged();			
+			if(newEventCount > 0) {
+				try {
+					((Vibrator)getSystemService(VIBRATOR_SERVICE)).vibrate(250);
+				} catch(Throwable t) {
+					t.printStackTrace();
+				}
+			}
+			((BaseAdapter)((ExpandableListView)findViewById(R.id.viewCategories)).getAdapter()).notifyDataSetChanged();
+		}
+	}
+	
+	private void fixEventDateTZs() {
+		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
+		String[] tzs = getResources().getStringArray(R.array.timezones);		
+		
+		int tzSelection = sp.getInt("Timezone", tzs.length / 2);
+		int tzOffset = Integer.parseInt(tzs[tzSelection]) * -1;
+		long currentTzOffset = 0;
+				
+		for(Event e : events) {
+			Date d = e.getDate();
+			currentTzOffset = TimeZone.getDefault().getOffset(d.getTime());
+			e.setDate(new Date(d.getTime() + TimeUnit.MILLISECONDS.convert(tzOffset, TimeUnit.HOURS) + currentTzOffset));
 		}
 	}
 	
 	protected int countNewEvents() {
 		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
-	
+		
 		int newCount = 0;
-		long latest = 0;
-		long latestOrig = sp.getLong("LatestEvent", 0);
-				
+		
+		long latestEventStart = Long.MAX_VALUE, latestEventEnd = 0;
+		long oldLatestEventEnd = sp.getLong("LatestEventEnd", 0);
+		
 		for(Event e : events) {
-			long time = e.getDate().getTime();
-			if(time > latestOrig) {
-				newCount++;
-				if(time > latest) {
-					latest = time;
+			long eventTime = e.getDate().getTime();
+			// Record end time for this group of events
+			if(eventTime > latestEventEnd) {
+				latestEventEnd = eventTime;
+			}
+			// Count new events
+			if(eventTime > oldLatestEventEnd) {			
+				// Record start time only for new events
+				if(eventTime < latestEventStart) {
+					latestEventStart = eventTime;
 				}
+				newCount++;
 			}
 		}
-		
 		SharedPreferences.Editor editor = sp.edit();
-		editor.putLong("LatestEvent", latest == 0 ? latestOrig : latest);
+		editor.putLong("LatestEventStart", latestEventStart);
+		editor.putLong("LatestEventEnd", latestEventEnd);
 		editor.commit();
 		
-		return newCount;
+		return newCount;	
 	}
 	
 	public int getNewEventCount() {
@@ -190,13 +220,13 @@ public class MainActivity extends Activity {
 	
 	public long getNewEventCutoff() {
 		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
-		return sp.getLong("LatestEvent", 0);
+		return sp.getLong("LatestEventStart", 0);
 	}
 	
-	public void setNewEventCutoff(long time) {
+	public void updateNewEventCutoff() {
 		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
 		SharedPreferences.Editor e = sp.edit();
-		e.putLong("LatestEvent", time);
+		e.putLong("LatestEventStart", sp.getLong("LatestEventEnd", 0));
 		e.commit();
 	}
 	

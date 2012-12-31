@@ -9,20 +9,26 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 public class LoginActivity extends Activity {
 	
 	private Dialog mDialog;
+	
+	public static String ATTEMPT_AUTOLOGIN = "ATTEMPT_AUTOLOGIN";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
+		
+		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 		
 		findViewById(R.id.buttonLogin).setOnClickListener(new OnClickListener() {		
 			@Override
@@ -30,6 +36,9 @@ public class LoginActivity extends Activity {
 				doLogin((Button)v);
 			}
 		});		
+		
+		Spinner editTimezone = (Spinner) findViewById(R.id.editTimezone);
+		editTimezone.setSelection(editTimezone.getCount() / 2);
 	
 		populateLoginForm();
 		if(!finishIfRequired()) {
@@ -39,7 +48,7 @@ public class LoginActivity extends Activity {
 	
 	private void attemptAutologin() {
 		Intent i = getIntent();
-		if(i.getBooleanExtra(MainActivity.ATTEMPT_AUTOLOGIN, false)) {
+		if(i.getBooleanExtra(LoginActivity.ATTEMPT_AUTOLOGIN, false)) {
 			SharedPreferences sp = getSharedPreferences("UserInfo", 0);
 			String username = sp.getString("Username", null),
 				   password = sp.getString("Password", null),
@@ -74,9 +83,10 @@ public class LoginActivity extends Activity {
 	
 	private void populateLoginForm() {
 		EditText editEndpoint = (EditText) findViewById(R.id.editEndpoint),
-				 editUsername = (EditText) findViewById(R.id.editUsername),
-				 editPassword = (EditText) findViewById(R.id.editPassword);
-		
+				editUsername = (EditText) findViewById(R.id.editUsername),
+				editPassword = (EditText) findViewById(R.id.editPassword);
+		Spinner editTimezone = (Spinner) findViewById(R.id.editTimezone);
+
 		SharedPreferences sp = getSharedPreferences("UserInfo", 0);
 		
 		if(sp.contains("Username")) {
@@ -88,12 +98,16 @@ public class LoginActivity extends Activity {
 		if(sp.contains("Endpoint")) {
 			editEndpoint.setText(sp.getString("Endpoint", ""));
 		}
+		if(sp.contains("Timezone")) {
+			editTimezone.setSelection(sp.getInt("Timezone", 0));
+		}
 	}
 	
 	private void doLogin(Button loginBtn) {
 		EditText editEndpoint = (EditText) findViewById(R.id.editEndpoint),
-				 editUsername = (EditText) findViewById(R.id.editUsername),
-				 editPassword = (EditText) findViewById(R.id.editPassword);
+				editUsername = (EditText) findViewById(R.id.editUsername),
+				editPassword = (EditText) findViewById(R.id.editPassword);
+		Spinner editTimezone = (Spinner) findViewById(R.id.editTimezone);
 		
 		String endpoint = editEndpoint.getText().toString(),
 			   username = editUsername.getText().toString(),
@@ -123,6 +137,7 @@ public class LoginActivity extends Activity {
 				e.putString("Username", username);
 				e.putString("Password", password);
 				e.putString("Endpoint", endpoint);
+				e.putInt("Timezone", editTimezone.getSelectedItemPosition());
 				
 				e.commit();
 			}
